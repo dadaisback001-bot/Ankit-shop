@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👑 Luxury Store</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; }
+
+  body {
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    min-height: 100vh;
+    color: #fff;
+    padding: 16px;
+    padding-bottom: 100px;
+  }
+
+  .header {
+    text-align: center;
+    padding: 20px 0;
+  }
+  .header h1 {
+    font-size: 26px;
+    background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+  .header p { color: #b8b8d1; font-size: 13px; margin-top: 6px; }
+
+  .product-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,215,0,0.25);
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 14px;
+    transition: all 0.3s ease;
+  }
+  .product-card:active {
+    transform: scale(0.98);
+    border-color: #FFD700;
+    box-shadow: 0 0 20px rgba(255,215,0,0.3);
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .badge.premium {
+    background: linear-gradient(90deg, #8b00ff, #ff00ff);
+    color: #fff;
+  }
+  .badge.regular {
+    background: linear-gradient(90deg, #0066ff, #00ccff);
+    color: #fff;
+  }
+
+  .product-name { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .product-desc { font-size: 13px; color: #b8b8d1; margin-bottom: 10px; }
+
+  .price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+  }
+  .price {
+    font-size: 22px;
+    font-weight: 800;
+    color: #FFD700;
+  }
+
+  .buy-btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(90deg, #00b894, #00cec9);
+    box-shadow: 0 4px 15px rgba(0,184,148,0.4);
+    cursor: pointer;
+  }
+  .buy-btn:active { transform: scale(0.95); }
+  .buy-btn:disabled {
+    background: #444;
+    box-shadow: none;
+    color: #888;
+  }
+
+  .section-title {
+    font-size: 14px;
+    color: #FFD700;
+    font-weight: 700;
+    margin: 20px 0 12px;
+    letter-spacing: 2px;
+  }
+
+  /* Modal */
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal.show { display: flex; }
+  .modal-box {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 1px solid rgba(255,215,0,0.4);
+    border-radius: 20px;
+    padding: 24px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+  }
+  .modal-title {
+    font-size: 18px;
+    color: #FFD700;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+  .modal-qr {
+    width: 220px; height: 220px;
+    background: #fff;
+    border-radius: 12px;
+    margin: 12px auto;
+    padding: 8px;
+  }
+  .modal-qr img { width: 100%; height: 100%; object-fit: contain; }
+  .upi-id {
+    background: rgba(255,215,0,0.1);
+    border: 1px dashed #FFD700;
+    padding: 10px;
+    border-radius: 10px;
+    font-family: monospace;
+    font-size: 13px;
+    margin: 10px 0;
+    color: #FFD700;
+  }
+  .modal-btn {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 8px;
+    cursor: pointer;
+  }
+  .paid-btn { background: linear-gradient(90deg, #00b894, #00cec9); }
+  .close-btn { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+
+  .loader {
+    text-align: center;
+    padding: 40px;
+    color: #FFD700;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 40px;
+    color: #b8b8d1;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>👑 LUXURY STORE</h1>
+  <p>Premium Digital Products • Instant Delivery</p>
+</div>
+
+<div class="section-title">🛍️ AVAILABLE PRODUCTS</div>
+<div id="productList"><div class="loader">✨ Loading...</div></div>
+
+<!-- Payment Modal -->
+<div class="modal" id="payModal">
+  <div class="modal-box">
+    <div class="modal-title">💳 Secure Payment</div>
+    <div id="payProductName" style="font-size:13px;color:#b8b8d1;margin-bottom:8px;"></div>
+    <div id="payAmount" style="font-size:26px;font-weight:800;color:#FFD700;margin-bottom:10px;"></div>
+
+    <div class="modal-qr">
+      <img id="qrImg" src="" alt="QR Code">
+    </div>
+
+    <div style="font-size:12px;color:#b8b8d1;">UPI ID (tap to copy):</div>
+    <div class="upi-id" id="upiId">loading...</div>
+
+    <button class="modal-btn paid-btn" onclick="confirmPaid()">
+      ✅ I have paid — Send Screenshot in Chat
+    </button>
+    <button class="modal-btn close-btn" onclick="closeModal()">❌ Cancel</button>
+  </div>
+</div>
+
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  const BOT_USERNAME = "YOUR_BOT_USERNAME";   // ← apna bot username (@ ke bina)
+  const UPI_ID = "yourupi@upi";               // ← apni UPI ID
+  const QR_IMAGE = "https://i.ibb.co/xxxx/qr.png";  // ← QR image direct link
+
+  let currentProduct = null;
+
+  // Load products
+  fetch("products.json")
+    .then(r => r.json())
+    .then(products => renderProducts(products))
+    .catch(() => {
+      document.getElementById("productList").innerHTML =
+        '<div class="empty">❌ Products load nahi hue</div>';
+    });
+
+  function renderProducts(products) {
+    const list = document.getElementById("productList");
+    if (!products.length) {
+      list.innerHTML = '<div class="empty">Koi product nahi hai</div>';
+      return;
+    }
+
+    list.innerHTML = products.map(p => {
+      const stock = p.stock || 0;
+      const badge = p.premium
+        ? '<span class="badge premium">👑 PREMIUM</span>'
+        : '<span class="badge regular">✨ REGULAR</span>';
+
+      const outOfStock = stock <= 0;
+
+      return `
+        <div class="product-card">
+          ${badge}
+          <div class="product-name">${p.name}</div>
+          <div class="product-desc">${p.description}</div>
+          <div class="price-row">
+            <div class="price">₹${p.price}</div>
+            <button class="buy-btn" ${outOfStock ? 'disabled' : ''}
+              onclick='openPayment(${JSON.stringify(p).replace(/'/g, "&apos;")})'>
+              ${outOfStock ? 'Out of Stock' : '🛒 Buy Now'}
+            </button>
+          </div>
+          ${stock > 0 && stock < 5 ? `<div style="font-size:11px;color:#ff6b6b;margin-top:8px;">🔥 Only ${stock} left!</div>` : ''}
+        </div>
+      `;
+    }).join("");
+  }
+
+  function openPayment(product) {
+    currentProduct = product;
+    document.getElementById("payProductName").innerText = product.name;
+    document.getElementById("payAmount").innerText = "₹" + product.price;
+    document.getElementById("qrImg").src = QR_IMAGE;
+    document.getElementById("upiId").innerText = UPI_ID;
+    document.getElementById("payModal").classList.add("show");
+  }
+
+  function closeModal() {
+    document.getElementById("payModal").classList.remove("show");
+    currentProduct = null;
+  }
+
+  function confirmPaid() {
+    if (!currentProduct) return;
+
+    // Bot ko data bhejo
+    const data = {
+      action: "paid",
+      product_id: currentProduct.id,
+      product_name: currentProduct.name,
+      price: currentProduct.price
+    };
+
+    tg.sendData(JSON.stringify(data));
+    tg.close();
+  }
+
+  // Copy UPI on tap
+  document.getElementById("upiId").addEventListener("click", () => {
+    navigator.clipboard.writeText(UPI_ID);
+    tg.showAlert("UPI ID copied! ✅");
+  });
+</script>
+</body>
+</html>
